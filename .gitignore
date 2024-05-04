@@ -1,0 +1,5 @@
+bin/
+Deps/
+obj/
+Libraries/
+*.zip
