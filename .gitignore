@@ -1,5 +1,5 @@
-Fast_cutscenes/bin/
-.vs/
-Fast_cutscenes/obj/
-Libraries/
+Fast_cutscenes/bin
+.vs
+Fast_cutscenes/obj
+Libraries
 *.zip
