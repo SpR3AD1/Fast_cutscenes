@@ -1,0 +1,6 @@
+C:\Users\joern\source\repos\Fast_cutscenes\Fast_cutscenes\bin\Debug\Fast_cutscenes.dll
+C:\Users\joern\source\repos\Fast_cutscenes\Fast_cutscenes\bin\Debug\Fast_cutscenes.pdb
+C:\Users\joern\source\repos\Fast_cutscenes\Fast_cutscenes\obj\Debug\Fast_cutscenes.csproj.AssemblyReference.cache
+C:\Users\joern\source\repos\Fast_cutscenes\Fast_cutscenes\obj\Debug\Fast_cutscenes.csproj.CoreCompileInputs.cache
+C:\Users\joern\source\repos\Fast_cutscenes\Fast_cutscenes\obj\Debug\Fast_cutscenes.dll
+C:\Users\joern\source\repos\Fast_cutscenes\Fast_cutscenes\obj\Debug\Fast_cutscenes.pdb
