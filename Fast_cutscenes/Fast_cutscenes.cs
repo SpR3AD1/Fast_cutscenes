@@ -15,9 +15,11 @@ namespace Fast_cutscenes_lib
     {
         public const string pluginGuid = "Fast_cutscenes";
         public const string pluginName = "Fast_cutscenes";
-        public const string pluginVersion = "1.0.0";
+        public const string pluginVersion = "1.0.1";
 
         public const bool logging = false;
+
+        public static bool credits_rolled = false;
 
         public static ConfigEntry<bool> auto_textskip;
         public static ConfigEntry<string> fast_cutscenes;
@@ -125,6 +127,14 @@ namespace Fast_cutscenes_lib
                 if (auto_textskip.Value)
                 {
                     Skip_Text();
+                }
+                if (credits_rolled & (Time.timeScale >= speedtime.Value) & GameSceneManager.GetCurrentSceneName() == "lvlConnect_Fortress_Mountaintops")
+                {
+                    if (!PlayerGlobal.instance.InputPaused())
+                    {
+                        Fast_cs_off();
+                        credits_rolled = false;
+                    }
                 }
             }
         }
@@ -283,6 +293,11 @@ namespace Fast_cutscenes_lib
                 ((__instance.name == "SHRINE_Crow_Arrows Variant" || __instance.name == "SHRINE_Crow") & fast_shrines.Value)))
             {
                 Fast_cs_on("Cutscene: " + __instance.name);
+                if (__instance.name == "CUTSCENE_LodEulogy" & fast_credits.Value)
+                {
+                    credits_rolled = true;
+                    if (logging) { Log.LogWarning("credits_rolled: " + credits_rolled.ToString()); }
+                }
             }
             else if (___playing & Time.timeScale == speedtime.Value & ((___timeline.duration - ___timeline.time) < 0.2))
             {
@@ -302,7 +317,7 @@ namespace Fast_cutscenes_lib
 
         private static void Fast_cs_off(string name = null)
         {
-            if (Time.timeScale == speedtime.Value)
+            if (Time.timeScale >= speedtime.Value)
             {
                 if (name == null)
                 {
