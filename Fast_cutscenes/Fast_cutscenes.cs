@@ -15,11 +15,13 @@ namespace Fast_cutscenes_lib
     {
         public const string pluginGuid = "Fast_cutscenes";
         public const string pluginName = "Fast_cutscenes";
-        public const string pluginVersion = "1.0.1";
+        public const string pluginVersion = "1.0.2";
 
         public const bool logging = false;
 
         public static bool credits_rolled = false;
+
+        public static bool gofast = false;
 
         public static ConfigEntry<bool> auto_textskip;
         public static ConfigEntry<string> fast_cutscenes;
@@ -130,11 +132,12 @@ namespace Fast_cutscenes_lib
                 }
                 if (credits_rolled & (Time.timeScale >= speedtime.Value) & GameSceneManager.GetCurrentSceneName() == "lvlConnect_Fortress_Mountaintops")
                 {
-                    if (!PlayerGlobal.instance.InputPaused())
-                    {
-                        Fast_cs_off();
-                        credits_rolled = false;
-                    }
+                    Fast_cs_off();
+                    credits_rolled = false;
+                }
+                if (gofast)
+                {
+                    Fast_cs_on();
                 }
             }
         }
@@ -143,7 +146,7 @@ namespace Fast_cutscenes_lib
         {
             foreach (NPCCharacter i in Resources.FindObjectsOfTypeAll<NPCCharacter>())
             {
-                if (!i.IsFinished())
+                if (!i.IsFinished() && i.GetCurrentTextId() != "hod_log_4")
                 {
                     i.NextLine();
                 }
@@ -176,18 +179,11 @@ namespace Fast_cutscenes_lib
             }
         }
 
-        [HarmonyPatch(typeof(AI_SilentServant), "FixedUpdate")]
+        [HarmonyPatch(typeof(AI_SilentServant), "OnDeath")]
         [HarmonyPostfix]
-        public static void Fast_cs_on_Servant(AI_SilentServant __instance)
+        public static void Fast_cs_on_Servant()
         {
-            if ((fast_cutscenes.Value == "all" || fast_servant_kill.Value) & Time.timeScale < speedtime.Value & (fast_cutscenes.Value != "none"))
-            {
-                AI_Brain.AIState state = __instance.GetState();
-                if (state == AI_Brain.AIState.Dead)
-                {
-                    Fast_cs_on();
-                }
-            }
+            Fast_cs_on();
         }
 
         [HarmonyPatch(typeof(RedeemerCorpse), "Start")]
@@ -307,12 +303,17 @@ namespace Fast_cutscenes_lib
 
         private static void Fast_cs_on(string name = null)
         {
-            if (name == null)
+            if (Time.timeScale != speedtime.Value)
             {
-                name = (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name;
+                if (name == null)
+                {
+                    name = (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name;
+                }
+                if (logging) { Log.LogWarning("Fast: " + name); }
+                Time.timeScale = speedtime.Value;
+                PlayerGlobal.instance.PauseInput();
+                gofast = true;
             }
-            if (logging) { Log.LogWarning("Fast: " + name); }
-            Time.timeScale = speedtime.Value;
         }
 
         private static void Fast_cs_off(string name = null)
@@ -325,6 +326,7 @@ namespace Fast_cutscenes_lib
                 }
                 if (logging) { Log.LogWarning("Slow: " + name); }
                 Time.timeScale = 1f;
+                gofast = false;
             }
         }
 
