@@ -4,6 +4,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using System;
 using System.Globalization;
+using System.Reflection;
 using System.Resources;
 using UnityEngine;
 using UnityEngine.Playables;
@@ -15,13 +16,12 @@ namespace Fast_cutscenes_lib
     {
         public const string pluginGuid = "Fast_cutscenes";
         public const string pluginName = "Fast_cutscenes";
-        public const string pluginVersion = "1.0.2";
+        public const string pluginVersion = "1.0.3";
 
         public const bool logging = false;
 
-        public static bool credits_rolled = false;
-
         public static bool gofast = false;
+        public static bool credits_rolled = false;
 
         public static ConfigEntry<bool> auto_textskip;
         public static ConfigEntry<string> fast_cutscenes;
@@ -33,6 +33,8 @@ namespace Fast_cutscenes_lib
         public static ConfigEntry<bool> skip_frog;
         public static ConfigEntry<bool> skip_bard;
         public static ConfigEntry<bool> skip_shop_prompted;
+        public static ConfigEntry<bool> skip_gravedigger_tut;
+        public static ConfigEntry<bool> skip_camp_intro;
         public static ConfigEntry<bool> skip_lod_clap;
 
         public static ConfigEntry<bool> fast_chandler;
@@ -46,8 +48,10 @@ namespace Fast_cutscenes_lib
         public static ConfigEntry<bool> fast_boss_soul;
         public static ConfigEntry<bool> fast_gd_after_boss;
         public static ConfigEntry<bool> fast_lod_clap;
+        public static ConfigEntry<bool> fast_gondola;
         public static ConfigEntry<bool> fast_ff_intro;
         public static ConfigEntry<bool> fast_frog_intro;
+        public static ConfigEntry<bool> fast_ls_torch;
         public static ConfigEntry<bool> fast_betty_intro;
         public static ConfigEntry<bool> fast_gd_boss_intro;
         public static ConfigEntry<bool> fast_gd_boss_kill;
@@ -66,6 +70,7 @@ namespace Fast_cutscenes_lib
         public static ConfigEntry<bool> fast_crow_souls;
         public static ConfigEntry<bool> fast_owls;
         public static ConfigEntry<bool> fast_shrines;
+        public static ConfigEntry<bool> fast_tablet_doors;
 
         internal static new ManualLogSource Log; //logging (idk if this is needed whatever I have it in other projects too c:)
 
@@ -84,6 +89,8 @@ namespace Fast_cutscenes_lib
             skip_frog = base.Config.Bind<bool>("Skipped_cutscenes", "Frog Cutscenes", true, new ConfigDescription("Skip all of the Frog cutscenes."));
             skip_bard = base.Config.Bind<bool>("Skipped_cutscenes", "Bard Cutscenes", true, new ConfigDescription("Skip all of the Bard cutscenes."));
             skip_shop_prompted = base.Config.Bind<bool>("Skipped_cutscenes", "Shop cs after DFS", true, new ConfigDescription("Skip the cutscene of the shopkeeper after DFS."));
+            skip_gravedigger_tut = base.Config.Bind<bool>("Skipped_cutscenes", "Gavedigger tutorial", true, new ConfigDescription("Skip the cutscene of gravedigger teaching you how to heavy."));
+            skip_camp_intro = base.Config.Bind<bool>("Skipped_cutscenes", "Camp intro", true, new ConfigDescription("Skip the cutscene of entering camp for the first time."));
             skip_lod_clap = base.Config.Bind<bool>("Skipped_cutscenes", "LoD Clap", true, new ConfigDescription("Skip the cutscene of LoD applauding to you."));
 
             fast_chandler = base.Config.Bind<bool>("Sped_up_cutscenes", "Chandler", true, new ConfigDescription("Speed up chandler cutscene."));
@@ -97,7 +104,9 @@ namespace Fast_cutscenes_lib
             fast_boss_soul = base.Config.Bind<bool>("Sped_up_cutscenes", "Boss soul cutscene", true, new ConfigDescription("Speed up the rotating soul cutscene after boss kill."));
             fast_gd_after_boss = base.Config.Bind<bool>("Sped_up_cutscenes", "GD cs after Boss kill", true, new ConfigDescription("Speed up the cutscene of gravedigger burring Bosses."));
             fast_lod_clap = base.Config.Bind<bool>("Sped_up_cutscenes", "LoD Clap", true, new ConfigDescription("Speed up the cutscene of LoD applauding to you."));
+            fast_gondola = base.Config.Bind<bool>("Sped_up_cutscenes", "Gondola", true, new ConfigDescription("Speed up the gondola ride."));
             fast_ff_intro = base.Config.Bind<bool>("Sped_up_cutscenes", "FF Intro", true, new ConfigDescription("Speed up Flooded Fortress intro cutscene."));
+            fast_ls_torch = base.Config.Bind<bool>("Sped_up_cutscenes", "Locstone torches", true, new ConfigDescription("Speed up the cutscenes of lighting torches in lockstone."));
             fast_frog_intro = base.Config.Bind<bool>("Sped_up_cutscenes", "Frog Intro", true, new ConfigDescription("Speed up Frog intro cutscene."));
             fast_betty_intro = base.Config.Bind<bool>("Sped_up_cutscenes", "Betty Intro", true, new ConfigDescription("Speed up Betty intro cutscene."));
             fast_gd_boss_intro = base.Config.Bind<bool>("Sped_up_cutscenes", "Gravedigger Boss Intro", true, new ConfigDescription("Speed up gravedigger boss intro cutscene."));
@@ -117,6 +126,7 @@ namespace Fast_cutscenes_lib
             fast_crow_souls = base.Config.Bind<bool>("Sped_up_cutscenes", "Crow Souls", true, new ConfigDescription("Speed up the cutscenes of crow souls flying to ancient doors."));
             fast_owls = base.Config.Bind<bool>("Sped_up_cutscenes", "Owls", true, new ConfigDescription("Speed up the owl cutscenes."));
             fast_shrines = base.Config.Bind<bool>("Sped_up_cutscenes", "Shrines", true, new ConfigDescription("Speed up the shrine cutscenes."));
+            fast_tablet_doors = base.Config.Bind<bool>("Sped_up_cutscenes", "Tablet doors", true, new ConfigDescription("Speed up the tablet doors opening cutscene."));
 
             Harmony harmony = new Harmony(pluginGuid);
             harmony.PatchAll(typeof(Fast_cutscenes));
@@ -135,7 +145,7 @@ namespace Fast_cutscenes_lib
                     Fast_cs_off();
                     credits_rolled = false;
                 }
-                if (gofast)
+                if (gofast || credits_rolled)
                 {
                     Fast_cs_on();
                 }
@@ -153,7 +163,6 @@ namespace Fast_cutscenes_lib
             }
         }
 
-
         [HarmonyPatch(typeof(GameSave), "SetKeyState")]
         [HarmonyPostfix]
         public static void SetKeyState_new(string id)
@@ -162,7 +171,26 @@ namespace Fast_cutscenes_lib
             {
                 GameSave.GetSaveData().SetKeyState("c_met_lod", true, true);
             }
+            if (id.Contains("fort_cam_") & gofast) 
+            { 
+                Fast_cs_off(); 
+            }
             if (logging) { Log.LogWarning("Set Key: " + id); }
+        }
+
+
+        [HarmonyPatch(typeof(ForestBuggy), "Trigger")]
+        [HarmonyPostfix]
+        public static void ForestBuggy_speed(ForestBuggy __instance, ref float ___startFadeTimer)
+        {
+            if (fast_gondola.Value)
+            {
+                if (___startFadeTimer > 0f)
+                {
+                    ___startFadeTimer = Time.fixedDeltaTime / 2;
+                }
+                __instance.moveStepTime = 0.1f;
+            }
         }
 
         [HarmonyPatch(typeof(GrandmaBoss), "FixedUpdate")]
@@ -237,21 +265,35 @@ namespace Fast_cutscenes_lib
             }
         }
 
-        [HarmonyPatch(typeof(PlayerGlobal), "UnPauseInput_Cutscene")]
+        [HarmonyPatch(typeof(TruthDoor), "updateLocalFocusCam")]
         [HarmonyPostfix]
-        public static void Fast_cs_off_unpause_cut()
+        public static void Fast_cs_on_Truthdoors(float ___openTween, float ___camTween)
         {
-            if (!PlayerGlobal.instance.IsInputPausedCutscene() & Time.timeScale == speedtime.Value)
+            if ((fast_cutscenes.Value == "all" || fast_tablet_doors.Value) & Time.timeScale < speedtime.Value & (fast_cutscenes.Value != "none") & ___openTween < 1f)
+            {
+                Fast_cs_on();
+            }
+            if (___camTween > 0f && fast_tablet_doors.Value)
             {
                 Fast_cs_off();
             }
         }
 
-        [HarmonyPatch(typeof(PlayerGlobal), "UnPauseInput_Talk")]
+        [HarmonyPatch(typeof(FireLamp), "TurnOn")]
         [HarmonyPostfix]
-        public static void Fast_cs_off_unpause_talk()
+        public static void Fast_cs_on_Torch(FireLamp __instance, bool silent = false)
         {
-            if (!PlayerGlobal.instance.IsInputPausedCutscene() & Time.timeScale == speedtime.Value)
+            if ((fast_cutscenes.Value == "all" || fast_ls_torch.Value) & Time.timeScale < speedtime.Value & (fast_cutscenes.Value != "none") & __instance.name.Contains("fort_") & !silent)
+            {
+                Fast_cs_on();
+            }
+        }
+
+        [HarmonyPatch(typeof(PlayerInputControl), "PauseInput")]
+        [HarmonyPrefix]
+        public static void Fast_cs_off_unpause(bool p = true)
+        {
+            if (!p & Time.timeScale == speedtime.Value)
             {
                 Fast_cs_off();
             }
@@ -261,6 +303,7 @@ namespace Fast_cutscenes_lib
         [HarmonyPostfix]
         public static void Cutscene_new(Cutscene __instance, bool ___playing, PlayableDirector ___timeline)
         {
+            //if (___playing) { if (logging) { Log.LogWarning("cutscene: " + __instance.name); } }
             if ((___playing & Time.timeScale < speedtime.Value & ((___timeline.duration - ___timeline.time) > 0.2) & (fast_cutscenes.Value != "none")) &
                 ((__instance.name == "Cutscene_Handler" & fast_chandler.Value) ||
                 (__instance.name == "_FORESTMOTHER_INTRO" & fast_dfs_intro.Value) ||
@@ -294,6 +337,10 @@ namespace Fast_cutscenes_lib
                     credits_rolled = true;
                     if (logging) { Log.LogWarning("credits_rolled: " + credits_rolled.ToString()); }
                 }
+                if ((__instance.name == "GD_CUTSCENE" || __instance.name == "GD_CUTSCENE_2") & gofast)
+                {
+                    gofast = false;
+                }
             }
             else if (___playing & Time.timeScale == speedtime.Value & ((___timeline.duration - ___timeline.time) < 0.2))
             {
@@ -310,8 +357,8 @@ namespace Fast_cutscenes_lib
                     name = (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name;
                 }
                 if (logging) { Log.LogWarning("Fast: " + name); }
-                Time.timeScale = speedtime.Value;
                 PlayerGlobal.instance.PauseInput();
+                Time.timeScale = speedtime.Value;
                 gofast = true;
             }
         }
@@ -326,6 +373,7 @@ namespace Fast_cutscenes_lib
                 }
                 if (logging) { Log.LogWarning("Slow: " + name); }
                 Time.timeScale = 1f;
+                PlayerGlobal.instance.UnPauseInput();
                 gofast = false;
             }
         }
@@ -391,10 +439,19 @@ namespace Fast_cutscenes_lib
                     GameSave.GetSaveData().SetKeyState("bard_betty_cave", true, true);
                     GameSave.GetSaveData().SetKeyState("bard_pre_betty", true, true);
                 }
+                if (skip_gravedigger_tut.Value)
+                {
+                    GameSave.GetSaveData().SetKeyState("gd_intro_done", true, true);
+                }
 
                 if (skip_shop_prompted.Value)
                 {
                     GameSave.GetSaveData().SetKeyState("shop_prompted", true, true);
+                }
+                
+                if (skip_camp_intro.Value)
+                {
+                    GameSave.GetSaveData().SetKeyState("covenant_intro", true, true);
                 }
 
                 GameSave.SaveGameState();
