@@ -16,7 +16,7 @@ namespace Fast_cutscenes_lib
     {
         public const string pluginGuid = "Fast_cutscenes";
         public const string pluginName = "Fast_cutscenes";
-        public const string pluginVersion = "1.0.3";
+        public const string pluginVersion = "1.0.4";
 
         public const bool logging = false;
 
@@ -46,7 +46,6 @@ namespace Fast_cutscenes_lib
         public static ConfigEntry<bool> fast_unspecific;
         public static ConfigEntry<bool> fast_boss_kill;
         public static ConfigEntry<bool> fast_boss_soul;
-        public static ConfigEntry<bool> fast_gd_after_boss;
         public static ConfigEntry<bool> fast_lod_clap;
         public static ConfigEntry<bool> fast_gondola;
         public static ConfigEntry<bool> fast_ff_intro;
@@ -102,7 +101,6 @@ namespace Fast_cutscenes_lib
             fast_unspecific = base.Config.Bind<bool>("Sped_up_cutscenes", "unspecified", true, new ConfigDescription("Speed up cutscenes that are just names CUTSCENE like grandma vault talk for example."));
             fast_boss_kill = base.Config.Bind<bool>("Sped_up_cutscenes", "Boss death scream", true, new ConfigDescription("Speed up boss kill animations."));
             fast_boss_soul = base.Config.Bind<bool>("Sped_up_cutscenes", "Boss soul cutscene", true, new ConfigDescription("Speed up the rotating soul cutscene after boss kill."));
-            fast_gd_after_boss = base.Config.Bind<bool>("Sped_up_cutscenes", "GD cs after Boss kill", true, new ConfigDescription("Speed up the cutscene of gravedigger burring Bosses."));
             fast_lod_clap = base.Config.Bind<bool>("Sped_up_cutscenes", "LoD Clap", true, new ConfigDescription("Speed up the cutscene of LoD applauding to you."));
             fast_gondola = base.Config.Bind<bool>("Sped_up_cutscenes", "Gondola", true, new ConfigDescription("Speed up the gondola ride."));
             fast_ff_intro = base.Config.Bind<bool>("Sped_up_cutscenes", "FF Intro", true, new ConfigDescription("Speed up Flooded Fortress intro cutscene."));
@@ -311,7 +309,7 @@ namespace Fast_cutscenes_lib
                 (__instance.name == "CUTSCENE_RedeemerIntro" & fast_gotd_intro.Value) ||
                 (__instance.name == "CUTSCENE_CrowIntro" & fast_first_summit.Value) ||
                 (__instance.name == "Cutscene" & fast_unspecific.Value) ||
-                ((__instance.name == "GD_CUTSCENE" || __instance.name == "GD_CUTSCENE_2") & fast_gd_after_boss.Value) ||
+                
                 (__instance.name == "Cutscene_MEET" & fast_lod_clap.Value) ||
                 (__instance.name == "CUTSCENE_FrogIntro" & fast_ff_intro.Value) ||
                 (__instance.name == "CUTSCENE_FrogBOSSIntro" & fast_frog_intro.Value) ||
@@ -337,15 +335,12 @@ namespace Fast_cutscenes_lib
                     credits_rolled = true;
                     if (logging) { Log.LogWarning("credits_rolled: " + credits_rolled.ToString()); }
                 }
-                if ((__instance.name == "GD_CUTSCENE" || __instance.name == "GD_CUTSCENE_2") & gofast)
-                {
-                    gofast = false;
-                }
             }
             else if (___playing & Time.timeScale == speedtime.Value & ((___timeline.duration - ___timeline.time) < 0.2))
             {
                 Fast_cs_off("Cutscene: " + __instance.name);
             }
+            
         }
 
         private static void Fast_cs_on(string name = null)
