@@ -3,14 +3,8 @@ using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using System;
-using System.Globalization;
-using System.Reflection;
-using System.Resources;
 using UnityEngine;
 using UnityEngine.Playables;
-using static RootMotion.FinalIK.GrounderQuadruped;
-using static UnityStandardAssets.Utility.TimedObjectActivator;
 
 namespace Fast_cutscenes_lib
 {
@@ -22,7 +16,7 @@ namespace Fast_cutscenes_lib
         public const string pluginName = "Fast_cutscenes";
         public const string pluginVersion = "1.0.5";
 
-        public const bool logging = true;
+        public const bool logging = false;
 
         private static bool randomizerLoaded = false;
 
