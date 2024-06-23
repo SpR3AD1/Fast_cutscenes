@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -8,17 +9,22 @@ using System.Reflection;
 using System.Resources;
 using UnityEngine;
 using UnityEngine.Playables;
+using static RootMotion.FinalIK.GrounderQuadruped;
+using static UnityStandardAssets.Utility.TimedObjectActivator;
 
 namespace Fast_cutscenes_lib
 {
     [BepInPlugin(pluginGuid, pluginName, pluginVersion)]
+    [BepInDependency("deathsdoor.randomizer", BepInDependency.DependencyFlags.SoftDependency)]
     public class Fast_cutscenes : BaseUnityPlugin
     {
         public const string pluginGuid = "Fast_cutscenes";
         public const string pluginName = "Fast_cutscenes";
-        public const string pluginVersion = "1.0.4";
+        public const string pluginVersion = "1.0.5";
 
-        public const bool logging = false;
+        public const bool logging = true;
+
+        private static bool randomizerLoaded = false;
 
         public static bool gofast = false;
         public static bool credits_rolled = false;
@@ -128,6 +134,19 @@ namespace Fast_cutscenes_lib
 
             Harmony harmony = new Harmony(pluginGuid);
             harmony.PatchAll(typeof(Fast_cutscenes));
+        }
+
+        private void Start()
+        {
+            foreach (var plugin in Chainloader.PluginInfos)
+            {
+                var metadata = plugin.Value.Metadata;
+                if (metadata.GUID.Equals("deathsdoor.randomizer"))
+                {
+                    randomizerLoaded = true;
+                    break;
+                }
+            }
         }
 
         private void Update()
@@ -247,7 +266,21 @@ namespace Fast_cutscenes_lib
         [HarmonyPostfix]
         public static void Fast_cs_on_CrowSoul()
         {
-            if ((fast_cutscenes.Value == "all" || fast_crow_souls.Value) & Time.timeScale < speedtime.Value & (fast_cutscenes.Value != "none"))
+            if (!randomizerLoaded)
+            {
+                if ((fast_cutscenes.Value == "all" || fast_crow_souls.Value) & Time.timeScale < speedtime.Value & (fast_cutscenes.Value != "none"))
+                {
+                    Fast_cs_on();
+                }
+            }
+        }
+        
+        [HarmonyPatch(typeof(CrowSoulCharge), "doUnlock")]
+        [HarmonyPostfix]
+        public static void Fast_cs_on_CrowSoul_cs()
+        {
+            if (logging) { Log.LogWarning("Crow unlock"); }
+                if ((fast_cutscenes.Value == "all" || fast_crow_souls.Value) & Time.timeScale < speedtime.Value & (fast_cutscenes.Value != "none"))
             {
                 Fast_cs_on();
             }
@@ -301,7 +334,7 @@ namespace Fast_cutscenes_lib
         [HarmonyPostfix]
         public static void Cutscene_new(Cutscene __instance, bool ___playing, PlayableDirector ___timeline)
         {
-            //if (___playing) { if (logging) { Log.LogWarning("cutscene: " + __instance.name); } }
+            // if (___playing) { if (logging) { Log.LogWarning("cutscene: " + __instance.name); } }
             if ((___playing & Time.timeScale < speedtime.Value & ((___timeline.duration - ___timeline.time) > 0.2) & (fast_cutscenes.Value != "none")) &
                 ((__instance.name == "Cutscene_Handler" & fast_chandler.Value) ||
                 (__instance.name == "_FORESTMOTHER_INTRO" & fast_dfs_intro.Value) ||
@@ -352,6 +385,7 @@ namespace Fast_cutscenes_lib
                     name = (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name;
                 }
                 if (logging) { Log.LogWarning("Fast: " + name); }
+
                 PlayerGlobal.instance.PauseInput();
                 Time.timeScale = speedtime.Value;
                 gofast = true;
