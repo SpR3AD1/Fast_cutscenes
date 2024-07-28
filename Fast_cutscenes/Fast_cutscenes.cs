@@ -222,7 +222,10 @@ namespace Fast_cutscenes_lib
         [HarmonyPostfix]
         public static void Fast_cs_on_Servant()
         {
-            Fast_cs_on();
+            if (((fast_cutscenes.Value == "all") || fast_servant_kill.Value) & (fast_cutscenes.Value != "none"))
+            {
+                Fast_cs_on();
+            }
         }
 
         [HarmonyPatch(typeof(RedeemerCorpse), "Start")]
