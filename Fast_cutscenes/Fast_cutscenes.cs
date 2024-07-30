@@ -14,7 +14,7 @@ namespace Fast_cutscenes_lib
     {
         public const string pluginGuid = "Fast_cutscenes";
         public const string pluginName = "Fast_cutscenes";
-        public const string pluginVersion = "1.0.5";
+        public const string pluginVersion = "1.0.6";
 
         public const bool logging = false;
 
@@ -23,7 +23,7 @@ namespace Fast_cutscenes_lib
         public static bool gofast = false;
         public static bool credits_rolled = false;
 
-        public static ConfigEntry<bool> auto_textskip;
+        public static ConfigEntry<string> auto_textskip;
         public static ConfigEntry<string> fast_cutscenes;
         public static ConfigEntry<float> speedtime;
 
@@ -77,7 +77,8 @@ namespace Fast_cutscenes_lib
         {
             Log = base.Logger;
 
-            auto_textskip = base.Config.Bind<bool>("General", "auto_textskip", true, new ConfigDescription("Automatically skip all text-boxes."));
+            auto_textskip = base.Config.Bind(new ConfigDefinition("General", "auto_textskip"), "every textbox", new ConfigDescription("Automatically skip all text-boxes.",
+                                    new AcceptableValueList<string>("every textbox", "only in cutscenes", "off")));
             fast_cutscenes = base.Config.Bind(new ConfigDefinition("General", "fast_cutscenes"), "all", new ConfigDescription("Speed up cutscenes.",
                                     new AcceptableValueList<string>("all", "specific", "none")));
             speedtime = base.Config.Bind<float>("General", "speed_time", 20f, new ConfigDescription("Speed value. for cutscenes", new AcceptableValueRange<float>(1f, 20f)));
@@ -147,7 +148,7 @@ namespace Fast_cutscenes_lib
         {
             if (GameTimeTracker.instance != null)
             {
-                if (auto_textskip.Value)
+                if ((auto_textskip.Value == "every textbox") || (auto_textskip.Value == "only in cutscenes" & (Time.timeScale >= speedtime.Value)))
                 {
                     Skip_Text();
                 }
