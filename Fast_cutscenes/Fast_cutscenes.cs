@@ -14,7 +14,7 @@ namespace Fast_cutscenes_lib
     {
         public const string pluginGuid = "Fast_cutscenes";
         public const string pluginName = "Fast_cutscenes";
-        public const string pluginVersion = "1.0.6";
+        public const string pluginVersion = "1.0.7";
 
         public const bool logging = false;
 
@@ -296,15 +296,11 @@ namespace Fast_cutscenes_lib
 
         [HarmonyPatch(typeof(TruthDoor), "updateLocalFocusCam")]
         [HarmonyPostfix]
-        public static void Fast_cs_on_Truthdoors(float ___openTween, float ___camTween)
+        public static void Fast_cs_on_Truthdoors(float ___openTween, float ___camTween, CameraFocusObject ___inRangeCamFocus)
         {
-            if ((fast_cutscenes.Value == "all" || fast_tablet_doors.Value) & Time.timeScale < speedtime.Value & (fast_cutscenes.Value != "none") & ___openTween < 1f)
+            if ((___inRangeCamFocus != null || PlayerGlobal.instance.IsInputPausedCutscene() || PlayerGlobal.instance.IsInputPausedTalk()) && ((fast_cutscenes.Value == "all" || fast_tablet_doors.Value) & Time.timeScale < speedtime.Value & (fast_cutscenes.Value != "none") & ___openTween < 1f))
             {
                 Fast_cs_on();
-            }
-            if (___camTween > 0f && fast_tablet_doors.Value)
-            {
-                Fast_cs_off();
             }
         }
 
@@ -322,6 +318,25 @@ namespace Fast_cutscenes_lib
         [HarmonyPrefix]
         public static void Fast_cs_off_unpause(bool p = true)
         {
+            if (logging)
+            {
+                if (p)
+                {
+                    int i = 0;
+                    string name = (new System.Diagnostics.StackTrace()).GetFrame(i).GetMethod().Name;
+                    while (name != null)
+                    {
+                        try
+                        {
+                            Log.LogWarning("pause_input: " + name);
+                            i++;
+                            name = (new System.Diagnostics.StackTrace()).GetFrame(i).GetMethod().Name;
+                        }
+                        catch { name = null; }
+                    }
+                }
+            }
+
             if (!p & Time.timeScale == speedtime.Value)
             {
                 Fast_cs_off();
